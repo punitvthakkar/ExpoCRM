@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Expo CRM</title>
+<title>ExpoCRM HHI</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --p:#2563EB;--pl:#EFF6FF;--pd:#1E40AF;
+  --p:#039374;--pl:#E6F5F1;--pd:#027560;
   --hot:#DC2626;--hotl:#FEF2F2;
   --warm:#D97706;--warml:#FFFBEB;
   --cold:#475569;--coldl:#F8FAFC;
   --bg:#F1F5F9;--surf:#fff;
   --tx:#0F172A;--tx2:#64748B;--bdr:#E2E8F0;
-  --sh:0 1px 3px rgba(15,23,42,.06),0 4px 12px rgba(37,99,235,.07);
+  --sh:0 1px 3px rgba(15,23,42,.06),0 4px 12px rgba(3,147,116,.08);
   --r:16px;--rs:10px;--ease:cubic-bezier(.4,0,.2,1)
 }
 html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
@@ -166,8 +166,8 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
 .u-sub{font-size:12px;color:var(--tx2);margin-top:4px}
 
 /* ── LINKEDIN BANNER ── */
-.li-banner{display:none;margin-bottom:12px;background:#EFF6FF;
-  border:1.5px solid #BFDBFE;border-radius:var(--rs);
+.li-banner{display:none;margin-bottom:12px;background:var(--pl);
+  border:1.5px solid rgba(3,147,116,.25);border-radius:var(--rs);
   padding:12px 14px;gap:10px;align-items:flex-start}
 .li-banner.on{display:flex}
 .li-ico{flex-shrink:0;color:var(--p);margin-top:1px}
@@ -208,7 +208,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
 .fi,.fta,.fsel{width:100%;padding:11px 13px;border:1.5px solid var(--bdr);
   border-radius:var(--rs);font-size:14px;font-family:inherit;color:var(--tx);
   background:var(--surf);outline:none;transition:border-color .15s}
-.fi:focus,.fta:focus,.fsel:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.fi:focus,.fta:focus,.fsel:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(3,147,116,.15)}
 .fta{resize:vertical;min-height:74px;line-height:1.5}
 .status-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sstatus{border:2px solid var(--bdr);border-radius:var(--rs);padding:10px 6px;
@@ -293,7 +293,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
 @keyframes tIn{from{opacity:0;transform:translateY(-6px)}}
 .t-ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
 .t-err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
-.t-inf{background:var(--pl);color:var(--pd);border:1px solid #BFDBFE}
+.t-inf{background:var(--pl);color:var(--pd);border:1px solid rgba(3,147,116,.3)}
 .toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .t-ok .toast-dot{background:#22C55E}
 .t-err .toast-dot{background:#EF4444}
@@ -323,6 +323,26 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
   .content-col{flex:1;overflow-y:auto;height:100vh}
 }
 .mt-12{margin-top:12px}.mt-16{margin-top:16px}
+
+/* ── DARK MODE ── */
+@media(prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --p:#039374;--pl:#0C2D27;--pd:#05C4A3;
+    --hot:#F87171;--hotl:#2D0E0E;
+    --warm:#FBBF24;--warml:#291800;
+    --cold:#8BA3BF;--coldl:#1C2D42;
+    --bg:#0D1626;--surf:#152135;
+    --tx:#EDF2F7;--tx2:#7A95B4;--bdr:#233450;
+    --sh:0 1px 4px rgba(0,0,0,.5),0 4px 20px rgba(0,0,0,.35)
+  }
+  .t-ok{background:#052E16;color:#4ADE80;border-color:#166534}
+  .t-err{background:#300D0D;color:#F87171;border-color:#7F1D1D}
+  .t-inf{background:var(--pl);color:var(--pd);border-color:rgba(3,147,116,.4)}
+  .t-ok .toast-dot{background:#22C55E}
+  .t-err .toast-dot{background:#F87171}
+  .modal-bd{background:rgba(0,0,0,.65)}
+}
 </style>
 </head>
 <body>
@@ -334,7 +354,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
     <div class="sb-mark">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </div>
-    <span class="sb-txt">Expo CRM</span>
+    <span class="sb-txt">ExpoCRM HHI</span>
   </div>
   <nav class="sb-nav">
     <button class="sb-item active" data-view="contacts">
@@ -359,7 +379,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
       <div class="logo-mark">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
-      <span class="logo-txt">Expo CRM</span>
+      <span class="logo-txt">ExpoCRM HHI</span>
     </div>
     <div class="hdr-btns">
       <button class="hbtn" data-view="export" title="Export">
@@ -469,7 +489,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
           </div>
           <div class="fg">
             <label class="pre-lbl" for="pre-comment">Notes — what they need, follow-up context (sent to AI with card)</label>
-            <textarea class="fta" id="pre-comment" placeholder="e.g. wants Semantic Lens demo next week, budget ~$50k"></textarea>
+            <textarea class="fta" id="pre-comment" placeholder="e.g. interested in enterprise plan, wants demo next week, budget ~$50k"></textarea>
           </div>
           <button class="btn btn-p btn-full mt-12" onclick="runGemini()">Analyze with Gemini AI</button>
         </div>
@@ -615,7 +635,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
         </div>
       </div>
       <div style="text-align:center;padding:20px 16px;font-size:11px;color:var(--tx2);line-height:1.8">
-        Expo CRM &middot; All data stored locally on your device<br>AI powered by Google Gemini
+        ExpoCRM HHI &middot; All data stored locally on your device<br>AI powered by Google Gemini
       </div>
     </section>
 
@@ -1124,7 +1144,7 @@ async function doZip(){
       if(seen[fn]>1)fn+='_'+seen[fn];
       imgs.file(fn+'.jpg',c.img.split(',')[1],{base64:true});
     });
-    zip.file('README.txt',`Expo CRM Export\nGenerated : ${new Date().toLocaleString()}\nTeam member: ${S.teamName||'—'}\nContacts  : ${S.contacts.length}\n\nImport contacts.csv into Google Sheets, Excel, or any CRM.\ncard_images/ contains business card photos named by contact.`);
+    zip.file('README.txt',`ExpoCRM HHI Export\nGenerated : ${new Date().toLocaleString()}\nTeam member: ${S.teamName||'—'}\nContacts  : ${S.contacts.length}\n\nImport contacts.csv into Google Sheets, Excel, or any CRM.\ncard_images/ contains business card photos named by contact.`);
     const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
     dlBlob(blob,`expo_crm_${today()}.zip`);
     toast(`${S.contacts.length} contacts exported`,'ok');
