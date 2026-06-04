@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Expo CRM</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#2563EB;--pl:#EFF6FF;--pd:#1E40AF;
+  --hot:#DC2626;--hotl:#FEF2F2;
+  --warm:#D97706;--warml:#FFFBEB;
+  --cold:#475569;--coldl:#F8FAFC;
+  --bg:#F1F5F9;--surf:#fff;
+  --tx:#0F172A;--tx2:#64748B;--bdr:#E2E8F0;
+  --sh:0 1px 3px rgba(15,23,42,.06),0 4px 12px rgba(37,99,235,.07);
+  --r:16px;--rs:10px;--ease:cubic-bezier(.4,0,.2,1)
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+
+/* ── APP SHELL ── */
+#app{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+.sidebar{display:none}
+.content-col{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:68px}
+
+/* ── MOBILE HEADER ── */
+.app-hdr{background:var(--surf);border-bottom:1px solid var(--bdr);
+  height:54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;flex-shrink:0;z-index:50}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{width:30px;height:30px;background:var(--p);border-radius:8px;
+  display:grid;place-items:center;flex-shrink:0}
+.logo-txt{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.hdr-btns{display:flex;gap:6px}
+.hbtn{width:36px;height:36px;border:none;background:var(--bg);border-radius:9px;
+  cursor:pointer;display:grid;place-items:center;color:var(--tx2);
+  transition:background .15s}
+.hbtn:hover{background:var(--pl);color:var(--p)}
+.hbtn svg{display:block}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--surf);
+  border-top:1px solid var(--bdr);display:flex;z-index:100;
+  padding-bottom:env(safe-area-inset-bottom)}
+.bni{flex:1;border:none;background:none;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;cursor:pointer;
+  color:var(--tx2);font-size:10px;font-weight:600;transition:color .15s}
+.bni-ico{width:44px;height:26px;display:grid;place-items:center;
+  border-radius:13px;transition:background .15s}
+.bni.active{color:var(--p)}
+.bni.active .bni-ico{background:var(--pl)}
+
+/* ── VIEWS ── */
+.view{display:none}.view.active{display:block}
+
+/* ── SECTION HEADER ── */
+.vhead{padding:18px 16px 6px}
+.vtitle{font-size:25px;font-weight:800;letter-spacing:-.5px}
+.vsub{font-size:13px;color:var(--tx2);margin-top:2px}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 16px}
+.stat{background:var(--surf);border-radius:var(--rs);padding:14px 10px;
+  text-align:center;box-shadow:var(--sh)}
+.stat-n{font-size:26px;font-weight:800;line-height:1}
+.stat-l{font-size:11px;color:var(--tx2);font-weight:500;margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+.s-hot .stat-n{color:var(--hot)}.s-warm .stat-n{color:var(--warm)}.s-cold .stat-n{color:var(--cold)}
+
+/* ── SEARCH ── */
+.sw{padding:0 16px 10px;position:relative}
+.si{position:absolute;left:28px;top:50%;transform:translateY(-50%);
+  color:var(--tx2);pointer-events:none;display:flex}
+.search{width:100%;padding:11px 14px 11px 42px;border:1.5px solid var(--bdr);
+  border-radius:12px;font-size:14px;color:var(--tx);background:var(--surf);outline:none;
+  transition:border-color .15s}
+.search:focus{border-color:var(--p)}
+
+/* ── FILTER CHIPS ── */
+.chips{display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:5px 13px;border-radius:20px;border:1.5px solid var(--bdr);
+  background:var(--surf);cursor:pointer;font-size:12px;font-weight:600;
+  color:var(--tx2);white-space:nowrap;transition:all .15s;flex-shrink:0}
+.chip.all.on{background:var(--p);color:#fff;border-color:var(--p)}
+.chip.hot{color:var(--hot);border-color:var(--hot)}.chip.hot.on{background:var(--hot);color:#fff}
+.chip.warm{color:var(--warm);border-color:var(--warm)}.chip.warm.on{background:var(--warm);color:#fff}
+.chip.cold{color:var(--cold);border-color:var(--cold)}.chip.cold.on{background:var(--cold);color:#fff}
+
+/* ── CONTACT CARDS ── */
+.clist{padding:0 16px;display:flex;flex-direction:column;gap:10px}
+.ccard{background:var(--surf);border-radius:var(--r);padding:14px;
+  display:flex;gap:12px;cursor:pointer;box-shadow:var(--sh);
+  border:1.5px solid transparent;transition:all .15s var(--ease)}
+.ccard:active{border-color:var(--p);transform:scale(.99)}
+@media(hover:hover){.ccard:hover{border-color:var(--p);transform:translateY(-1px)}}
+.cav{width:46px;height:46px;border-radius:12px;background:var(--pl);color:var(--p);
+  font-weight:800;font-size:16px;display:grid;place-items:center;
+  overflow:hidden;flex-shrink:0}
+.cav img{width:100%;height:100%;object-fit:cover}
+.cinfo{flex:1;min-width:0}
+.cname{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crole{font-size:12px;color:var(--tx2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmeta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;
+  text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
+.b-hot{background:var(--hotl);color:var(--hot)}
+.b-warm{background:var(--warml);color:var(--warm)}
+.b-cold{background:var(--coldl);color:var(--cold)}
+.cdate{font-size:11px;color:var(--tx2)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:52px 32px;color:var(--tx2)}
+.empty-ico{margin-bottom:16px;display:flex;justify-content:center}
+.empty h3{font-size:18px;font-weight:700;color:var(--tx);margin-bottom:8px}
+.empty p{font-size:14px;line-height:1.6}
+
+/* ── ADD VIEW ── */
+.awrap{padding:0 16px 28px}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.mcard{background:var(--surf);border:2px solid var(--bdr);border-radius:var(--r);
+  padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  cursor:pointer;text-align:center;transition:all .15s var(--ease);user-select:none}
+.mcard:active,.mcard.sel{border-color:var(--p);background:var(--pl)}
+.mcard-ico{width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  color:var(--tx2)}
+.mcard.sel .mcard-ico{color:var(--p)}
+.mcard-lbl{font-size:13px;font-weight:700;color:var(--tx)}
+.mcard-sub{font-size:11px;color:var(--tx2)}
+
+/* ── CAMERA ── */
+.cam-wrap{background:#000;border-radius:var(--r);overflow:hidden;
+  aspect-ratio:4/3;position:relative;display:none;margin-bottom:12px}
+.cam-wrap.on{display:block}
+.cam-vid{width:100%;height:100%;object-fit:cover;display:block}
+.cam-canvas{display:none}
+.cam-ui{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;padding:16px;
+  background:linear-gradient(transparent 50%,rgba(0,0,0,.55))}
+.cam-tip{font-size:12px;color:rgba(255,255,255,.85);text-align:center;margin-bottom:12px}
+.shutter{width:60px;height:60px;border-radius:50%;border:3px solid rgba(255,255,255,.8);
+  background:rgba(255,255,255,.15);cursor:pointer;display:grid;place-items:center;
+  backdrop-filter:blur(4px);transition:transform .1s}
+.shutter:active{transform:scale(.92)}
+.shutter-in{width:44px;height:44px;border-radius:50%;background:#fff}
+.qr-ui{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;flex-direction:column;gap:12px}
+.qr-box{width:200px;height:200px;border:2.5px solid rgba(255,255,255,.9);
+  border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);
+  position:relative;overflow:hidden}
+.qr-line{position:absolute;left:0;right:0;height:2px;background:var(--p);
+  animation:scan 2s ease-in-out infinite}
+@keyframes scan{0%,100%{top:4px}50%{top:calc(100% - 6px)}}
+.qr-hint{font-size:12px;color:rgba(255,255,255,.85)}
+
+/* ── UPLOAD ── */
+.upload-area{display:none;margin-bottom:12px}
+.upload-area.on{display:block}
+.ulabel{display:block;border:2px dashed var(--bdr);border-radius:var(--r);
+  padding:28px 20px;text-align:center;cursor:pointer;transition:all .15s}
+.ulabel:hover{border-color:var(--p);background:var(--pl)}
+.u-ico{width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 8px;color:var(--tx2)}
+.u-txt{font-size:14px;font-weight:600;color:var(--tx)}
+.u-sub{font-size:12px;color:var(--tx2);margin-top:4px}
+
+/* ── LINKEDIN BANNER ── */
+.li-banner{display:none;margin-bottom:12px;background:#EFF6FF;
+  border:1.5px solid #BFDBFE;border-radius:var(--rs);
+  padding:12px 14px;gap:10px;align-items:flex-start}
+.li-banner.on{display:flex}
+.li-ico{flex-shrink:0;color:var(--p);margin-top:1px}
+.li-ttl{font-size:13px;font-weight:700;color:var(--pd)}
+.li-url{font-size:11px;color:var(--p);word-break:break-all;margin-top:2px}
+
+/* ── ANALYZE SECTION ── */
+.asec{display:none;margin-bottom:16px}.asec.on{display:block}
+.pcard{border-radius:var(--r);overflow:hidden;position:relative;margin-bottom:12px}
+.pimg{width:100%;max-height:220px;object-fit:cover;display:block}
+.pretake{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;
+  border:none;cursor:pointer;padding:6px 12px;border-radius:20px;
+  font-size:12px;font-weight:600;backdrop-filter:blur(4px);transition:background .15s}
+.pretake:hover{background:rgba(0,0,0,.8)}
+.pre-lbl{font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:5px;display:block}
+
+/* ── PROCESSING ── */
+.processing{display:none;background:var(--surf);border-radius:var(--r);
+  padding:36px 24px;text-align:center;box-shadow:var(--sh);margin-bottom:16px}
+.processing.on{display:block}
+.spinner{width:44px;height:44px;border:3px solid var(--pl);border-top-color:var(--p);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-t{font-size:16px;font-weight:700;margin-bottom:6px}
+.proc-s{font-size:13px;color:var(--tx2)}
+
+/* ── CONTACT FORM ── */
+.cform{display:none}
+.fsect{margin-bottom:20px}
+.fsect-t{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--tx2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.fsect-t::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.ai-tag{font-size:9px;font-weight:800;color:var(--p);background:var(--pl);
+  padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fg{margin-bottom:10px}.fg:last-child{margin-bottom:0}
+.fl{font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:5px;display:block}
+.fi,.fta,.fsel{width:100%;padding:11px 13px;border:1.5px solid var(--bdr);
+  border-radius:var(--rs);font-size:14px;font-family:inherit;color:var(--tx);
+  background:var(--surf);outline:none;transition:border-color .15s}
+.fi:focus,.fta:focus,.fsel:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.fta{resize:vertical;min-height:74px;line-height:1.5}
+.status-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sstatus{border:2px solid var(--bdr);border-radius:var(--rs);padding:10px 6px;
+  text-align:center;cursor:pointer;font-size:12px;font-weight:700;
+  color:var(--tx2);transition:all .15s;user-select:none;letter-spacing:.2px}
+.sstatus.hot.on{border-color:var(--hot);background:var(--hotl);color:var(--hot)}
+.sstatus.warm.on{border-color:var(--warm);background:var(--warml);color:var(--warm)}
+.sstatus.cold.on{border-color:var(--cold);background:var(--coldl);color:var(--cold)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:13px 20px;border-radius:var(--rs);border:none;
+  font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .15s var(--ease)}
+.btn-full{width:100%}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--pd)}
+.btn-p:active{transform:scale(.98)}
+.btn-g{background:transparent;color:var(--tx2);border:1.5px solid var(--bdr)}
+.btn-g:hover{border-color:var(--p);color:var(--p)}
+.btn-s{background:var(--pl);color:var(--p)}.btn-s:hover{background:var(--p);color:#fff}
+.btn-d{background:var(--hotl);color:var(--hot)}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
+
+/* ── EXPORT ── */
+.ecard{background:var(--surf);border-radius:var(--r);padding:22px 18px;
+  text-align:center;margin:10px 16px;box-shadow:var(--sh)}
+.ecard-ico{width:52px;height:52px;background:var(--pl);border-radius:14px;
+  display:grid;place-items:center;margin:0 auto 14px;color:var(--p)}
+.ecard-t{font-size:17px;font-weight:800;margin-bottom:8px}
+.ecard-d{font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:18px}
+
+/* ── SETTINGS ── */
+.scard{margin:10px 16px;background:var(--surf);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--sh)}
+.sitem{padding:16px;border-bottom:1px solid var(--bdr)}
+.sitem:last-child{border-bottom:none}
+.sitem-l{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--tx)}
+.sitem-h{font-size:11px;color:var(--tx2);margin-top:5px;line-height:1.5}
+.key-wrap{position:relative}
+.key-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--tx2);
+  display:flex;align-items:center;padding:2px}
+.key-eye:hover{color:var(--p)}
+
+/* ── MODAL ── */
+.modal-bd{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  z-index:200;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
+.modal-bd.on{opacity:1;pointer-events:all}
+.modal{background:var(--surf);border-radius:24px 24px 0 0;width:100%;max-width:520px;
+  max-height:92dvh;overflow-y:auto;padding:0 20px 36px;
+  transform:translateY(100%);transition:transform .3s var(--ease)}
+.modal-bd.on .modal{transform:translateY(0)}
+.modal-handle{width:40px;height:4px;background:var(--bdr);border-radius:2px;
+  margin:12px auto 16px}
+.det-hero{width:100%;max-height:200px;object-fit:cover;border-radius:14px;
+  margin-bottom:16px;display:block}
+.det-top{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:12px;margin-bottom:14px}
+.det-name{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.det-role{font-size:13px;color:var(--tx2);margin-top:2px}
+.det-row{display:flex;gap:10px;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid var(--bdr)}
+.det-row:last-of-type{border-bottom:none}
+.det-ico{width:18px;flex-shrink:0;margin-top:2px;color:var(--tx2);display:flex}
+.det-lbl{font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.det-val{font-size:14px;color:var(--tx);margin-top:2px;word-break:break-word}
+.det-a{color:var(--p);text-decoration:none}.det-a:hover{text-decoration:underline}
+.det-note{background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin:12px 0}
+.det-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--tx2);margin-bottom:6px}
+.det-nt{font-size:13px;line-height:1.7}
+
+/* ── TOASTS ── */
+.toasts{position:fixed;top:66px;left:50%;transform:translateX(-50%);
+  width:calc(100% - 32px);max-width:380px;z-index:999;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:11px 14px;border-radius:12px;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:10px;pointer-events:all;
+  animation:tIn .25s var(--ease)}
+@keyframes tIn{from{opacity:0;transform:translateY(-6px)}}
+.t-ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
+.t-err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+.t-inf{background:var(--pl);color:var(--pd);border:1px solid #BFDBFE}
+.toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.t-ok .toast-dot{background:#22C55E}
+.t-err .toast-dot{background:#EF4444}
+.t-inf .toast-dot{background:var(--p)}
+
+/* ── DESKTOP ── */
+@media(min-width:860px){
+  #app{flex-direction:row;max-width:1200px;margin:0 auto;height:100vh}
+  .app-hdr{display:none}.bnav{display:none}
+  .scroll-area{padding-bottom:24px}
+  .sidebar{display:flex;flex-direction:column;width:228px;flex-shrink:0;
+    background:var(--surf);border-right:1px solid var(--bdr);
+    padding:22px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .sb-logo{display:flex;align-items:center;gap:10px;padding:0 8px 22px;
+    border-bottom:1px solid var(--bdr);margin-bottom:14px}
+  .sb-mark{width:34px;height:34px;background:var(--p);border-radius:10px;
+    display:grid;place-items:center;flex-shrink:0}
+  .sb-txt{font-size:17px;font-weight:800}
+  .sb-nav{flex:1}
+  .sb-item{display:flex;align-items:center;gap:10px;padding:11px 12px;
+    border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;
+    color:var(--tx2);border:none;background:none;width:100%;text-align:left;
+    margin-bottom:2px;transition:all .15s}
+  .sb-item:hover{background:var(--bg);color:var(--tx)}
+  .sb-item.active{background:var(--pl);color:var(--p);font-weight:700}
+  .sb-ico{width:20px;display:flex;justify-content:center;flex-shrink:0}
+  .content-col{flex:1;overflow-y:auto;height:100vh}
+}
+.mt-12{margin-top:12px}.mt-16{margin-top:16px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR (desktop) -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <span class="sb-txt">Expo CRM</span>
+  </div>
+  <nav class="sb-nav">
+    <button class="sb-item active" data-view="contacts">
+      <span class="sb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Contacts
+    </button>
+    <button class="sb-item" data-view="add">
+      <span class="sb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Add Contact
+    </button>
+    <button class="sb-item" data-view="export">
+      <span class="sb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Export
+    </button>
+    <button class="sb-item" data-view="settings">
+      <span class="sb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings
+    </button>
+  </nav>
+</aside>
+
+<!-- CONTENT -->
+<div class="content-col">
+  <header class="app-hdr">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="logo-txt">Expo CRM</span>
+    </div>
+    <div class="hdr-btns">
+      <button class="hbtn" data-view="export" title="Export">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="hbtn" data-view="settings" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <!-- ══ CONTACTS ══ -->
+    <section class="view active" id="view-contacts">
+      <div class="vhead">
+        <div class="vtitle">Contacts</div>
+        <div class="vsub" id="csub">0 leads collected</div>
+      </div>
+      <div class="stats">
+        <div class="stat s-hot"><div class="stat-n" id="sn-hot">0</div><div class="stat-l">Hot</div></div>
+        <div class="stat s-warm"><div class="stat-n" id="sn-warm">0</div><div class="stat-l">Follow Up</div></div>
+        <div class="stat s-cold"><div class="stat-n" id="sn-cold">0</div><div class="stat-l">Other</div></div>
+      </div>
+      <div class="sw">
+        <span class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="search" class="search" id="search" placeholder="Search name, company, email…" autocomplete="off">
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip all on" data-f="all">All</button>
+        <button class="chip hot" data-f="Hot Lead">Hot</button>
+        <button class="chip warm" data-f="Follow Up">Follow Up</button>
+        <button class="chip cold" data-f="Not Interested">Other</button>
+      </div>
+      <div class="clist" id="clist"></div>
+    </section>
+
+    <!-- ══ ADD CONTACT ══ -->
+    <section class="view" id="view-add">
+      <div class="vhead">
+        <div class="vtitle">Add Contact</div>
+        <div class="vsub">Capture leads from the expo floor</div>
+      </div>
+      <div class="awrap">
+
+        <!-- Step 1: choose method -->
+        <div id="s-method">
+          <div class="method-grid">
+            <div class="mcard" id="mc-camera" onclick="pickMethod('camera')">
+              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+              <div class="mcard-lbl">Scan Card</div>
+              <div class="mcard-sub">Use camera</div>
+            </div>
+            <div class="mcard" id="mc-upload" onclick="pickMethod('upload')">
+              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+              <div class="mcard-lbl">Upload Card</div>
+              <div class="mcard-sub">From gallery</div>
+            </div>
+            <div class="mcard" id="mc-qr" onclick="pickMethod('qr')">
+              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="19" y1="14" x2="21" y2="14"/><line x1="21" y1="17" x2="17" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/><line x1="21" y1="19" x2="21" y2="21"/></svg></div>
+              <div class="mcard-lbl">LinkedIn QR</div>
+              <div class="mcard-sub">Scan profile</div>
+            </div>
+            <div class="mcard" id="mc-manual" onclick="pickMethod('manual')">
+              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+              <div class="mcard-lbl">Manual Entry</div>
+              <div class="mcard-sub">Type details</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera -->
+        <div class="cam-wrap" id="cam-wrap">
+          <video class="cam-vid" id="cam-vid" autoplay playsinline muted></video>
+          <canvas class="cam-canvas" id="cam-canvas"></canvas>
+          <div class="cam-ui" id="cam-card">
+            <p class="cam-tip">Centre the business card in frame</p>
+            <button class="shutter" onclick="captureFrame()"><div class="shutter-in"></div></button>
+          </div>
+          <div class="qr-ui" id="cam-qr" style="display:none">
+            <div class="qr-box"><div class="qr-line"></div></div>
+            <span class="qr-hint">Scanning for LinkedIn QR…</span>
+          </div>
+        </div>
+
+        <!-- Upload -->
+        <div class="upload-area" id="upload-area">
+          <label class="ulabel" for="fpick">
+            <div class="u-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="u-txt">Choose a photo</div>
+            <div class="u-sub">JPG, PNG, HEIC accepted</div>
+          </label>
+          <input type="file" id="fpick" accept="image/*" style="display:none" onchange="handleUpload(event)">
+        </div>
+
+        <!-- LinkedIn detected -->
+        <div class="li-banner" id="li-banner">
+          <span class="li-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+          <div><div class="li-ttl">LinkedIn Profile Detected</div><div class="li-url" id="li-url"></div></div>
+        </div>
+
+        <!-- Analyze section (after photo) -->
+        <div class="asec" id="asec">
+          <div class="pcard">
+            <img class="pimg" id="pimg" src="" alt="">
+            <button class="pretake" onclick="retake()">Retake</button>
+          </div>
+          <div class="fg">
+            <label class="pre-lbl" for="pre-comment">Notes — what they need, follow-up context (sent to AI with card)</label>
+            <textarea class="fta" id="pre-comment" placeholder="e.g. interested in enterprise plan, wants demo next week, budget ~$50k"></textarea>
+          </div>
+          <button class="btn btn-p btn-full mt-12" onclick="runGemini()">Analyze with Gemini AI</button>
+        </div>
+
+        <!-- Processing -->
+        <div class="processing" id="processing">
+          <div class="spinner"></div>
+          <div class="proc-t">Analyzing with Gemini…</div>
+          <div class="proc-s" id="proc-s">Extracting contact details</div>
+        </div>
+
+        <!-- Contact form -->
+        <div class="cform" id="cform">
+          <div class="fsect">
+            <div class="fsect-t">Lead Status</div>
+            <div class="status-row">
+              <div class="sstatus hot" data-st="Hot Lead" onclick="setSt(this)">Hot Lead</div>
+              <div class="sstatus warm on" data-st="Follow Up" onclick="setSt(this)">Follow Up</div>
+              <div class="sstatus cold" data-st="Not Interested" onclick="setSt(this)">Other</div>
+            </div>
+          </div>
+
+          <div class="fsect">
+            <div class="fsect-t">Follow-up</div>
+            <div class="frow">
+              <div class="fg">
+                <label class="fl" for="f-followup">Follow-up Date</label>
+                <input type="date" class="fi" id="f-followup">
+              </div>
+            </div>
+            <div class="fg">
+              <label class="fl" for="f-comment">Notes / Action Items <span class="ai-tag">AI Enhanced</span></label>
+              <textarea class="fta" id="f-comment" placeholder="Key requirements, action items, next steps…"></textarea>
+            </div>
+          </div>
+
+          <div class="fsect">
+            <div class="fsect-t">Contact Details <span class="ai-tag">AI Filled</span></div>
+            <div class="fg">
+              <label class="fl" for="f-name">Full Name *</label>
+              <input type="text" class="fi" id="f-name" placeholder="Full name" autocomplete="name">
+            </div>
+            <div class="frow">
+              <div class="fg">
+                <label class="fl" for="f-title">Job Title</label>
+                <input type="text" class="fi" id="f-title" placeholder="e.g. CTO">
+              </div>
+              <div class="fg">
+                <label class="fl" for="f-company">Company</label>
+                <input type="text" class="fi" id="f-company" placeholder="Company">
+              </div>
+            </div>
+            <div class="fg">
+              <label class="fl" for="f-email">Email</label>
+              <input type="email" class="fi" id="f-email" placeholder="name@company.com">
+            </div>
+            <div class="fg">
+              <label class="fl" for="f-phone">Phone</label>
+              <input type="tel" class="fi" id="f-phone" placeholder="+1 234 567 8900">
+            </div>
+            <div class="fg">
+              <label class="fl" for="f-linkedin">LinkedIn URL</label>
+              <input type="url" class="fi" id="f-linkedin" placeholder="linkedin.com/in/…">
+            </div>
+            <div class="fg">
+              <label class="fl" for="f-website">Website</label>
+              <input type="url" class="fi" id="f-website" placeholder="www.company.com">
+            </div>
+            <div class="fg">
+              <label class="fl" for="f-address">Address</label>
+              <input type="text" class="fi" id="f-address" placeholder="City, Country">
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-g" onclick="resetAdd()">Cancel</button>
+            <button class="btn btn-p" onclick="saveContact()">Save Contact</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ EXPORT ══ -->
+    <section class="view" id="view-export">
+      <div class="vhead">
+        <div class="vtitle">Export Data</div>
+        <div class="vsub">Share your collected leads</div>
+      </div>
+      <div class="ecard">
+        <div class="ecard-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div class="ecard-t">Full ZIP Export</div>
+        <div class="ecard-d">Downloads a ZIP archive with all contacts as a CSV spreadsheet plus every captured business card photo, organized by contact name.</div>
+        <button class="btn btn-p btn-full" onclick="doZip()">Download ZIP</button>
+      </div>
+      <div class="ecard">
+        <div class="ecard-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="ecard-t">CSV Only</div>
+        <div class="ecard-d">Just the spreadsheet — no images. Quick download, easy to open in Google Sheets or Excel.</div>
+        <button class="btn btn-s btn-full" onclick="doCsv()">Download CSV</button>
+      </div>
+      <div class="ecard" style="padding:14px">
+        <div id="exp-info" style="font-size:13px;color:var(--tx2)">—</div>
+      </div>
+    </section>
+
+    <!-- ══ SETTINGS ══ -->
+    <section class="view" id="view-settings">
+      <div class="vhead">
+        <div class="vtitle">Settings</div>
+        <div class="vsub">Configure your Expo CRM</div>
+      </div>
+      <div class="scard">
+        <div class="sitem">
+          <div class="sitem-l">Your Name</div>
+          <input type="text" class="fi" id="cfg-name" placeholder="Name, Department">
+          <div class="sitem-h">Added to each exported row so the team can identify who captured a lead.</div>
+        </div>
+        <div class="sitem">
+          <div class="sitem-l">Gemini API Key</div>
+          <div class="key-wrap">
+            <input type="password" class="fi" id="cfg-key" placeholder="AIzaSy…" style="padding-right:42px;font-family:monospace;letter-spacing:.5px">
+            <button class="key-eye" id="eye-btn" onclick="toggleKey()">
+              <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="sitem-h">Stored only on this device. Get yours free at aistudio.google.com.</div>
+        </div>
+        <div class="sitem">
+          <div class="sitem-l">Gemini Model</div>
+          <input type="text" class="fi" id="cfg-model" placeholder="gemini-flash-lite-latest">
+          <div class="sitem-h">Default: gemini-flash-lite-latest. Update here if the API returns a model error.</div>
+        </div>
+        <div class="sitem">
+          <button class="btn btn-p btn-full" onclick="saveSettings()">Save Settings</button>
+        </div>
+      </div>
+      <div class="scard">
+        <div class="sitem">
+          <div class="sitem-l">Clear All Data</div>
+          <div class="sitem-h" style="margin-bottom:10px">Permanently removes all contacts from this device. Export first.</div>
+          <button class="btn btn-d btn-sm" onclick="clearData()">Clear All Contacts</button>
+        </div>
+      </div>
+      <div style="text-align:center;padding:20px 16px;font-size:11px;color:var(--tx2);line-height:1.8">
+        Expo CRM &middot; All data stored locally on your device<br>AI powered by Google Gemini
+      </div>
+    </section>
+
+  </div><!-- /scroll-area -->
+</div><!-- /content-col -->
+
+<!-- Bottom Nav -->
+<nav class="bnav">
+  <button class="bni active" data-view="contacts">
+    <span class="bni-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    <span>Contacts</span>
+  </button>
+  <button class="bni" data-view="add">
+    <span class="bni-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    <span>Add</span>
+  </button>
+  <button class="bni" data-view="export">
+    <span class="bni-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+    <span>Export</span>
+  </button>
+  <button class="bni" data-view="settings">
+    <span class="bni-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span>Settings</span>
+  </button>
+</nav>
+
+</div><!-- /app -->
+
+<!-- Contact detail modal -->
+<div class="modal-bd" id="modal-bd">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toasts" id="toasts"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+// SVG icon strings for dynamically generated content
+const IC = {
+  mail:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+  phone:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.44 2 2 0 0 1 3.55 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  building:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+  link:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+  globe:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  pin:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  cal:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  eyeOn:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  eyeOff:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+  people:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  search:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`
+};
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const S = {
+  contacts:[],apiKey:'',teamName:'',model:'gemini-flash-lite-latest',
+  view:'contacts',filter:'all',query:'',
+  method:null,capturedImg:null,
+  stream:null,qrTimer:null,
+  editId:null,selStatus:'Follow Up'
+};
+const K={c:'eCRM_c',k:'eCRM_k',t:'eCRM_t',m:'eCRM_m'};
+
+// ════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════
+function load(){
+  try{
+    S.contacts=JSON.parse(localStorage.getItem(K.c)||'[]');
+    S.apiKey=localStorage.getItem(K.k)||'';
+    S.teamName=localStorage.getItem(K.t)||'';
+    S.model=localStorage.getItem(K.m)||'gemini-flash-lite-latest';
+  }catch(e){S.contacts=[];}
+}
+function persist(){
+  try{localStorage.setItem(K.c,JSON.stringify(S.contacts));}
+  catch(e){if(e.name==='QuotaExceededError')toast('Storage full — export and clear contacts','err');}
+}
+
+// ════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════
+function nav(v){
+  if(S.view==='add'&&v!=='add')killCam();
+  S.view=v;
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  if(v==='contacts')renderList();
+  if(v==='settings')fillSettings();
+  if(v==='export')updateExpInfo();
+  if(v==='add')resetAdd();
+}
+
+// ════════════════════════════════════════════
+// RENDER CONTACTS
+// ════════════════════════════════════════════
+function renderList(){
+  let list=[...S.contacts];
+  if(S.query){
+    const q=S.query.toLowerCase();
+    list=list.filter(c=>[c.name,c.company,c.email,c.title].some(v=>(v||'').toLowerCase().includes(q)));
+  }
+  if(S.filter!=='all')list=list.filter(c=>c.status===S.filter);
+  list.sort((a,b)=>{
+    const o={'Hot Lead':0,'Follow Up':1,'Not Interested':2};
+    return(o[a.status]??1)-(o[b.status]??1)||b.createdAt-a.createdAt;
+  });
+  const tot=S.contacts.length;
+  document.getElementById('csub').textContent=`${tot} lead${tot!==1?'s':''} collected`;
+  document.getElementById('sn-hot').textContent=S.contacts.filter(c=>c.status==='Hot Lead').length;
+  document.getElementById('sn-warm').textContent=S.contacts.filter(c=>c.status==='Follow Up').length;
+  document.getElementById('sn-cold').textContent=S.contacts.filter(c=>c.status==='Not Interested').length;
+  const el=document.getElementById('clist');
+  if(!list.length){
+    el.innerHTML=`<div class="empty">
+      <div class="empty-ico" style="color:var(--bdr)">${!S.contacts.length?IC.people:IC.search}</div>
+      <h3>${!S.contacts.length?'No contacts yet':'No matches'}</h3>
+      <p>${!S.contacts.length?'Tap <b>Add</b> to capture your first lead.':'Try a different search or filter.'}</p>
+    </div>`;return;
+  }
+  el.innerHTML=list.map(c=>`
+    <div class="ccard" onclick="openContact('${esc(c.id)}')">
+      <div class="cav">${c.img?`<img src="${c.img}" alt="">`:`<span>${initials(c.name)}</span>`}</div>
+      <div class="cinfo">
+        <div class="cname">${esc(c.name||'Unknown')}</div>
+        <div class="crole">${esc([c.title,c.company].filter(Boolean).join(' · '))}</div>
+        <div class="cmeta">
+          <span class="badge ${bc(c.status)}">${esc(c.status||'Follow Up')}</span>
+          ${c.followUp?`<span class="cdate">${fmtD(c.followUp)}</span>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+const bc=s=>s==='Hot Lead'?'b-hot':s==='Follow Up'?'b-warm':'b-cold';
+const initials=n=>n?n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase():'?';
+const fmtD=d=>{const x=new Date(d+'T00:00:00');return x.toLocaleDateString('en-US',{month:'short',day:'numeric'});};
+const esc=s=>(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ════════════════════════════════════════════
+// CONTACT MODAL
+// ════════════════════════════════════════════
+function openContact(id){
+  const c=S.contacts.find(x=>x.id===id);if(!c)return;
+  const dr=(ico,lbl,val)=>`<div class="det-row"><span class="det-ico">${ico}</span><div><div class="det-lbl">${lbl}</div><div class="det-val">${val}</div></div></div>`;
+  document.getElementById('modal-body').innerHTML=`
+    ${c.img?`<img class="det-hero" src="${c.img}" alt="Business card">`:''}
+    <div class="det-top">
+      <div><div class="det-name">${esc(c.name||'Unknown')}</div>
+        <div class="det-role">${esc([c.title,c.company].filter(Boolean).join(' at '))}</div></div>
+      <span class="badge ${bc(c.status)}" style="font-size:11px;flex-shrink:0">${esc(c.status)}</span>
+    </div>
+    ${c.email?dr(IC.mail,'Email',`<a href="mailto:${esc(c.email)}" class="det-a">${esc(c.email)}</a>`):''}
+    ${c.phone?dr(IC.phone,'Phone',`<a href="tel:${esc(c.phone)}" class="det-a">${esc(c.phone)}</a>`):''}
+    ${c.company?dr(IC.building,'Company',esc(c.company)):''}
+    ${c.linkedin?dr(IC.link,'LinkedIn',`<a href="${esc(c.linkedin)}" target="_blank" class="det-a">${esc(c.linkedin)}</a>`):''}
+    ${c.website?dr(IC.globe,'Website',`<a href="${c.website.startsWith('http')?'':'https://'}${esc(c.website)}" target="_blank" class="det-a">${esc(c.website)}</a>`):''}
+    ${c.address?dr(IC.pin,'Address',esc(c.address)):''}
+    ${c.followUp?dr(IC.cal,'Follow Up',esc(c.followUp)):''}
+    ${c.comment?`<div class="det-note"><div class="det-nl">Notes</div><div class="det-nt">${esc(c.comment)}</div></div>`:''}
+    <div class="btn-row mt-16">
+      <button class="btn btn-s btn-sm" onclick="editContact('${esc(id)}')">Edit</button>
+      <button class="btn btn-d btn-sm" onclick="delContact('${esc(id)}')">Delete</button>
+    </div>`;
+  document.getElementById('modal-bd').classList.add('on');
+}
+function closeMod(){document.getElementById('modal-bd').classList.remove('on');}
+
+function editContact(id){
+  const c=S.contacts.find(x=>x.id===id);if(!c)return;
+  closeMod();S.editId=id;
+  S.capturedImg=c.img?{dataUrl:c.img}:null;
+  nav('add');
+  document.getElementById('s-method').style.display='none';
+  showForm();
+  sf('f-name',c.name);sf('f-title',c.title);sf('f-company',c.company);
+  sf('f-email',c.email);sf('f-phone',c.phone);sf('f-linkedin',c.linkedin);
+  sf('f-website',c.website);sf('f-address',c.address);
+  sf('f-comment',c.comment);sf('f-followup',c.followUp||'');
+  S.selStatus=c.status||'Follow Up';
+  document.querySelectorAll('.sstatus').forEach(s=>s.classList.toggle('on',s.dataset.st===S.selStatus));
+  if(c.img){document.getElementById('pimg').src=c.img;document.getElementById('asec').classList.add('on');}
+}
+
+function delContact(id){
+  if(!confirm('Delete this contact permanently?'))return;
+  S.contacts=S.contacts.filter(c=>c.id!==id);
+  persist();closeMod();renderList();toast('Contact deleted','inf');
+}
+const sf=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val||'';};
+
+// ════════════════════════════════════════════
+// ADD CONTACT — METHOD SELECTION
+// ════════════════════════════════════════════
+function pickMethod(m){
+  S.method=m;killCam();
+  document.querySelectorAll('.mcard').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('mc-'+m).classList.add('sel');
+  document.getElementById('cam-wrap').classList.remove('on');
+  document.getElementById('upload-area').classList.remove('on');
+  document.getElementById('asec').classList.remove('on');
+  document.getElementById('li-banner').classList.remove('on');
+  document.getElementById('processing').classList.remove('on');
+  if(m==='camera')startCam('card');
+  else if(m==='upload')document.getElementById('upload-area').classList.add('on');
+  else if(m==='qr')startCam('qr');
+  else if(m==='manual')showForm();
+}
+
+// ════════════════════════════════════════════
+// CAMERA
+// ════════════════════════════════════════════
+async function startCam(mode){
+  const wrap=document.getElementById('cam-wrap');
+  wrap.classList.add('on');
+  document.getElementById('cam-card').style.display=mode==='card'?'flex':'none';
+  document.getElementById('cam-qr').style.display=mode==='qr'?'flex':'none';
+  try{
+    S.stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    });
+    const vid=document.getElementById('cam-vid');
+    vid.srcObject=S.stream;
+    await vid.play();
+    if(mode==='qr')startQR();
+  }catch(e){
+    wrap.classList.remove('on');
+    toast('Camera access denied — check browser permissions','err');
+  }
+}
+
+function killCam(){
+  if(S.stream){S.stream.getTracks().forEach(t=>t.stop());S.stream=null;}
+  if(S.qrTimer){clearInterval(S.qrTimer);S.qrTimer=null;}
+  document.getElementById('cam-wrap').classList.remove('on');
+}
+
+function captureFrame(){
+  const vid=document.getElementById('cam-vid');
+  const cvs=document.getElementById('cam-canvas');
+  cvs.width=vid.videoWidth;cvs.height=vid.videoHeight;
+  cvs.getContext('2d').drawImage(vid,0,0);
+  const url=cvs.toDataURL('image/jpeg',.85);
+  S.capturedImg={dataUrl:url,mime:'image/jpeg'};
+  killCam();showPreview(url);
+}
+
+function handleUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>compress(ev.target.result,url=>{
+    S.capturedImg={dataUrl:url,mime:'image/jpeg'};showPreview(url);
+  });
+  r.readAsDataURL(file);
+}
+
+function compress(src,cb){
+  const img=new Image();
+  img.onload=()=>{
+    const MAX=1024,c=document.createElement('canvas');
+    let w=img.width,h=img.height;
+    if(w>MAX||h>MAX){if(w>=h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+    c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    cb(c.toDataURL('image/jpeg',.8));
+  };img.src=src;
+}
+
+function showPreview(url){
+  document.getElementById('upload-area').classList.remove('on');
+  document.getElementById('pimg').src=url;
+  document.getElementById('asec').classList.add('on');
+  document.getElementById('pre-comment').value='';
+}
+
+function retake(){
+  document.getElementById('asec').classList.remove('on');
+  S.capturedImg=null;
+  if(S.method==='camera')startCam('card');
+  else{document.getElementById('upload-area').classList.add('on');document.getElementById('fpick').value='';}
+}
+
+// ════════════════════════════════════════════
+// QR SCAN
+// ════════════════════════════════════════════
+function startQR(){
+  const vid=document.getElementById('cam-vid');
+  const cvs=document.createElement('canvas');
+  const ctx=cvs.getContext('2d');
+  S.qrTimer=setInterval(()=>{
+    if(vid.readyState<vid.HAVE_ENOUGH_DATA)return;
+    cvs.width=vid.videoWidth;cvs.height=vid.videoHeight;
+    ctx.drawImage(vid,0,0);
+    const d=ctx.getImageData(0,0,cvs.width,cvs.height);
+    const code=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+    if(code?.data){clearInterval(S.qrTimer);S.qrTimer=null;killCam();handleQR(code.data);}
+  },200);
+}
+
+async function handleQR(data){
+  const isLI=data.includes('linkedin.com/in/');
+  if(isLI){
+    document.getElementById('li-url').textContent=data;
+    document.getElementById('li-banner').classList.add('on');
+  }else{
+    toast('QR code detected — URL saved to LinkedIn field','inf');
+  }
+  if(!S.apiKey){
+    toast('No API key set — fill details manually','inf');
+    showForm();sf('f-linkedin',isLI?data:'');if(!isLI)sf('f-comment',data);return;
+  }
+  if(isLI){
+    document.getElementById('processing').classList.add('on');
+    document.getElementById('proc-s').textContent='Extracting name from LinkedIn URL…';
+    try{
+      const slug=data.match(/linkedin\.com\/in\/([^/?#]+)/)?.[1]||'';
+      const prompt=`LinkedIn URL: ${data}\nSlug: "${slug}"\nConvert slug to a proper human name (remove numeric suffixes, capitalize words, replace hyphens with spaces).\nReturn ONLY JSON: {"name":"Extracted Name","linkedin":"${data}"}`;
+      const r=await geminiText(prompt);
+      document.getElementById('processing').classList.remove('on');
+      showForm();
+      if(r.name)sf('f-name',r.name);
+      sf('f-linkedin',data);
+      toast('LinkedIn profile processed','ok');
+    }catch(e){
+      document.getElementById('processing').classList.remove('on');
+      showForm();sf('f-linkedin',data);
+      toast('Could not extract name — fill manually','inf');
+    }
+  }else{showForm();sf('f-linkedin',data);}
+}
+
+// ════════════════════════════════════════════
+// GEMINI
+// ════════════════════════════════════════════
+async function runGemini(){
+  if(!S.capturedImg){toast('No image to analyze','err');return;}
+  if(!S.apiKey){toast('Set your Gemini API key in Settings first','err');nav('settings');return;}
+  const comment=document.getElementById('pre-comment').value.trim();
+  document.getElementById('asec').classList.remove('on');
+  document.getElementById('processing').classList.add('on');
+  document.getElementById('proc-s').textContent='Reading business card…';
+  try{
+    const b64=S.capturedImg.dataUrl.split(',')[1];
+    const r=await geminiVision(b64,S.capturedImg.mime,comment);
+    document.getElementById('processing').classList.remove('on');
+    document.getElementById('asec').classList.add('on');
+    showForm();
+    sf('f-name',r.name);sf('f-title',r.title);sf('f-company',r.company);
+    sf('f-email',r.email);sf('f-phone',r.phone);sf('f-website',r.website);
+    sf('f-address',r.address);
+    sf('f-comment',r.enhancedComment||comment);
+    const valid=['Hot Lead','Follow Up','Not Interested'];
+    if(valid.includes(r.suggestedStatus)){
+      S.selStatus=r.suggestedStatus;
+      document.querySelectorAll('.sstatus').forEach(s=>s.classList.toggle('on',s.dataset.st===S.selStatus));
+    }
+    toast('Card analyzed successfully','ok');
+  }catch(e){
+    document.getElementById('processing').classList.remove('on');
+    document.getElementById('asec').classList.add('on');
+    showForm();
+    toast('Gemini error: '+(e.message||'Unknown error'),'err');
+  }
+}
+
+async function geminiVision(b64,mime,comment){
+  const prompt=`You are an expert business card parser and CRM assistant.
+Carefully analyze this business card image and extract ALL visible contact information.
+${comment?`The user's note about this contact: "${comment}"`:''}
+
+Return ONLY a raw JSON object (no markdown, no code fences) with these exact keys:
+{
+  "name": "full name on card",
+  "title": "job title or role",
+  "company": "company or organization name",
+  "email": "primary email address",
+  "phone": "phone number with country code if visible",
+  "website": "website URL",
+  "address": "full address, or city/country if partial",
+  "enhancedComment": "${comment?'Rewrite the user note professionally: key requirements, action items, follow-up context. Keep under 100 words.':''}",
+  "suggestedStatus": "based on context, exactly one of: Hot Lead | Follow Up | Not Interested"
+}
+Use empty string for any field not found on the card. Return ONLY the JSON.`;
+  return geminiReq([{text:prompt},{inline_data:{mime_type:mime,data:b64}}]);
+}
+
+async function geminiText(prompt){return geminiReq([{text:prompt}]);}
+
+async function geminiReq(parts){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${S.model}:generateContent?key=${S.apiKey}`;
+  const res=await fetch(url,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0.1,maxOutputTokens:600}})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
+  const data=await res.json();
+  const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  const m=text.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('Unexpected response format from Gemini');
+  return JSON.parse(m[0]);
+}
+
+// ════════════════════════════════════════════
+// CONTACT FORM
+// ════════════════════════════════════════════
+function showForm(){
+  document.getElementById('cform').style.display='block';
+  if(!document.querySelector('.sstatus.on')){
+    S.selStatus='Follow Up';
+    document.querySelector('.sstatus.warm')?.classList.add('on');
+  }
+}
+
+function setSt(el){
+  document.querySelectorAll('.sstatus').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');S.selStatus=el.dataset.st;
+}
+
+function saveContact(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){toast('Name is required','err');document.getElementById('f-name').focus();return;}
+  const contact={
+    id:S.editId||Date.now().toString(),
+    name,
+    title:document.getElementById('f-title').value.trim(),
+    company:document.getElementById('f-company').value.trim(),
+    email:document.getElementById('f-email').value.trim(),
+    phone:document.getElementById('f-phone').value.trim(),
+    linkedin:document.getElementById('f-linkedin').value.trim(),
+    website:document.getElementById('f-website').value.trim(),
+    address:document.getElementById('f-address').value.trim(),
+    comment:document.getElementById('f-comment').value.trim(),
+    followUp:document.getElementById('f-followup').value,
+    status:S.selStatus,
+    img:S.capturedImg?.dataUrl||null,
+    teamMember:S.teamName,
+    createdAt:S.editId?(S.contacts.find(c=>c.id===S.editId)?.createdAt||Date.now()):Date.now()
+  };
+  if(S.editId){
+    const i=S.contacts.findIndex(c=>c.id===S.editId);
+    if(i>=0)S.contacts[i]=contact;else S.contacts.unshift(contact);
+  }else{S.contacts.unshift(contact);}
+  persist();
+  toast(S.editId?'Contact updated':'Contact saved','ok');
+  S.editId=null;nav('contacts');
+}
+
+function resetAdd(){
+  S.editId=null;S.capturedImg=null;S.method=null;killCam();
+  document.getElementById('s-method').style.display='block';
+  document.getElementById('cform').style.display='none';
+  document.getElementById('asec').classList.remove('on');
+  document.getElementById('processing').classList.remove('on');
+  document.getElementById('upload-area').classList.remove('on');
+  document.getElementById('li-banner').classList.remove('on');
+  document.querySelectorAll('.mcard').forEach(c=>c.classList.remove('sel'));
+  ['f-name','f-title','f-company','f-email','f-phone','f-linkedin',
+   'f-website','f-address','f-comment','f-followup','pre-comment'].forEach(id=>sf(id,''));
+  S.selStatus='Follow Up';
+  document.querySelectorAll('.sstatus').forEach(s=>s.classList.toggle('on',s.dataset.st==='Follow Up'));
+  const fp=document.getElementById('fpick');if(fp)fp.value='';
+}
+
+// ════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════
+function updateExpInfo(){
+  const n=S.contacts.length,imgs=S.contacts.filter(c=>c.img).length;
+  document.getElementById('exp-info').textContent=`${n} contact${n!==1?'s':''} ready to export · ${imgs} with card images`;
+}
+
+function makeCSV(){
+  const h=['Name','Title','Company','Email','Phone','LinkedIn','Website','Address',
+           'Status','Follow-up Date','Notes','Team Member','Image File','Captured At'];
+  const rows=S.contacts.map(c=>{
+    const fn=c.img?sn(c.name||c.id)+'.jpg':'';
+    return[c.name,c.title,c.company,c.email,c.phone,c.linkedin,c.website,c.address,
+           c.status,c.followUp,c.comment,c.teamMember||'',fn,new Date(c.createdAt).toISOString()]
+      .map(v=>`"${(v||'').replace(/"/g,'""')}"`);
+  });
+  return[h.join(','),...rows.map(r=>r.join(','))].join('\n');
+}
+
+const sn=s=>(s||'contact').replace(/[^a-z0-9]/gi,'_').slice(0,40);
+const today=()=>new Date().toISOString().slice(0,10);
+function dlBlob(blob,name){const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:name});a.click();URL.revokeObjectURL(a.href);}
+
+async function doZip(){
+  if(!S.contacts.length){toast('No contacts to export','inf');return;}
+  toast('Building ZIP…','inf');
+  try{
+    const zip=new JSZip();
+    zip.file('contacts.csv',makeCSV());
+    const imgs=zip.folder('card_images');
+    const seen={};
+    S.contacts.forEach(c=>{
+      if(!c.img)return;
+      let fn=sn(c.name||c.id);
+      seen[fn]=(seen[fn]||0)+1;
+      if(seen[fn]>1)fn+='_'+seen[fn];
+      imgs.file(fn+'.jpg',c.img.split(',')[1],{base64:true});
+    });
+    zip.file('README.txt',`Expo CRM Export\nGenerated : ${new Date().toLocaleString()}\nTeam member: ${S.teamName||'—'}\nContacts  : ${S.contacts.length}\n\nImport contacts.csv into Google Sheets, Excel, or any CRM.\ncard_images/ contains business card photos named by contact.`);
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    dlBlob(blob,`expo_crm_${today()}.zip`);
+    toast(`${S.contacts.length} contacts exported`,'ok');
+  }catch(e){toast('Export error: '+e.message,'err');}
+}
+
+function doCsv(){
+  if(!S.contacts.length){toast('No contacts to export','inf');return;}
+  dlBlob(new Blob([makeCSV()],{type:'text/csv;charset=utf-8;'}),`expo_contacts_${today()}.csv`);
+  toast('CSV exported','ok');
+}
+
+// ════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════
+function fillSettings(){
+  sf('cfg-name',S.teamName);sf('cfg-key',S.apiKey);sf('cfg-model',S.model);
+}
+
+function saveSettings(){
+  const key=document.getElementById('cfg-key').value.trim();
+  const name=document.getElementById('cfg-name').value.trim();
+  const model=document.getElementById('cfg-model').value.trim()||'gemini-flash-lite-latest';
+  if(!key){toast('Please enter a Gemini API key','err');return;}
+  S.apiKey=key;S.teamName=name;S.model=model;
+  localStorage.setItem(K.k,key);localStorage.setItem(K.t,name);localStorage.setItem(K.m,model);
+  toast('Settings saved','ok');
+}
+
+function toggleKey(){
+  const i=document.getElementById('cfg-key'),on=i.type==='text';
+  i.type=on?'password':'text';
+  document.getElementById('eye-btn').innerHTML=on?IC.eyeOn:IC.eyeOff;
+}
+
+function clearData(){
+  if(!confirm('Delete ALL contacts permanently? Export first.'))return;
+  S.contacts=[];persist();renderList();toast('All contacts cleared','inf');
+}
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+function toast(msg,type='inf'){
+  const map={ok:'t-ok',err:'t-err',inf:'t-inf'};
+  const el=document.createElement('div');
+  el.className=`toast ${map[type]||'t-inf'}`;
+  el.innerHTML=`<span class="toast-dot"></span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.style.cssText='opacity:0;transform:translateY(-6px);transition:.25s ease';
+    setTimeout(()=>el.remove(),260);},3200);
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  load();
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.view)));
+  document.getElementById('search').addEventListener('input',e=>{S.query=e.target.value.trim();renderList();});
+  document.getElementById('chips').addEventListener('click',e=>{
+    const c=e.target.closest('[data-f]');if(!c)return;
+    S.filter=c.dataset.f;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f===S.filter));
+    renderList();
+  });
+  document.getElementById('modal-bd').addEventListener('click',e=>{
+    if(e.target===document.getElementById('modal-bd'))closeMod();
+  });
+  renderList();
+  if(!S.apiKey)setTimeout(()=>toast('Welcome — add your Gemini API key in Settings to enable AI features.','inf'),600);
+});
+</script>
+</body>
+</html>
