@@ -128,6 +128,16 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
 .mcard.sel .mcard-ico{color:var(--p)}
 .mcard-lbl{font-size:13px;font-weight:700;color:var(--tx)}
 .mcard-sub{font-size:11px;color:var(--tx2)}
+.mcard-full{grid-column:1/-1;flex-direction:row;justify-content:center;gap:12px;padding:14px 18px}
+.mcard-full .mcard-ico{width:28px;height:28px;flex-shrink:0}
+
+/* ── QUICK ADD ── */
+.qaarea{display:none;margin-bottom:16px}.qaarea.on{display:block}
+.qa-hint{font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.6}
+.qa-examples{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.qa-ex{font-size:11px;color:var(--tx2);background:var(--bg);border-radius:8px;
+  padding:7px 10px;cursor:pointer;transition:background .15s;font-style:italic;line-height:1.5}
+.qa-ex:hover{background:var(--pl);color:var(--p)}
 
 /* ── CAMERA ── */
 .cam-wrap{background:#000;border-radius:var(--r);overflow:hidden;
@@ -423,10 +433,9 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
               <div class="mcard-sub">From gallery</div>
             </div>
 
-            <div class="mcard" id="mc-manual" onclick="pickMethod('manual')">
-              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-              <div class="mcard-lbl">Manual Entry</div>
-              <div class="mcard-sub">Type details</div>
+            <div class="mcard mcard-full" id="mc-quick" onclick="pickMethod('quick')">
+              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/><path d="M15 5l3 3"/></svg></div>
+              <div><div class="mcard-lbl">Quick Add <span class="ai-tag" style="vertical-align:middle">AI</span></div><div class="mcard-sub">Describe the contact in plain words</div></div>
             </div>
           </div>
         </div>
@@ -452,6 +461,22 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
           <input type="file" id="fpick" accept="image/*" style="display:none" onchange="handleUpload(event)">
         </div>
 
+
+        <!-- Quick Add -->
+        <div class="qaarea" id="qaarea">
+          <div class="qa-hint">Describe who you met — name, role, company, what they need, when to follow up. Tap an example to try it.</div>
+          <div class="qa-examples">
+            <div class="qa-ex" onclick="qaInsert(this)">"Sarah Chen, Head of Procurement at Bayer, very interested in bulk pricing, call her next Monday"</div>
+            <div class="qa-ex" onclick="qaInsert(this)">"Abdul Johnson, Marketing Manager at Syngenta, wants product updates, email him tomorrow"</div>
+          </div>
+          <div class="fg">
+            <textarea class="fta" id="quick-text" placeholder="e.g. John Smith, VP Sales at Acme, needs enterprise plan demo, follow up next week…" style="min-height:90px"></textarea>
+          </div>
+          <div class="btn-row mt-12">
+            <button class="btn btn-g" onclick="showForm()">Enter manually</button>
+            <button class="btn btn-p" onclick="runQuickAdd()">Analyze with AI</button>
+          </div>
+        </div>
 
         <!-- Analyze section (after photo) -->
         <div class="asec" id="asec">
@@ -814,12 +839,12 @@ function pickMethod(m){
   document.getElementById('mc-'+m).classList.add('sel');
   document.getElementById('cam-wrap').classList.remove('on');
   document.getElementById('upload-area').classList.remove('on');
+  document.getElementById('qaarea').classList.remove('on');
   document.getElementById('asec').classList.remove('on');
-  document.getElementById('li-banner').classList.remove('on');
   document.getElementById('processing').classList.remove('on');
   if(m==='camera')startCam('card');
   else if(m==='upload')document.getElementById('upload-area').classList.add('on');
-  else if(m==='manual')showForm();
+  else if(m==='quick')document.getElementById('qaarea').classList.add('on');
 }
 
 // ════════════════════════════════════════════
@@ -954,6 +979,66 @@ Use empty string for any field not found on the card. Return ONLY the JSON.`;
 }
 
 
+// ════════════════════════════════════════════
+// QUICK ADD
+// ════════════════════════════════════════════
+function qaInsert(el){
+  const ta=document.getElementById('quick-text');
+  ta.value=el.textContent.replace(/^"|"$/g,'').trim();
+  ta.focus();
+}
+
+async function runQuickAdd(){
+  const text=document.getElementById('quick-text').value.trim();
+  if(!text){toast('Describe the contact first','err');return;}
+  if(!S.apiKey){toast('Set your Gemini API key in Settings first','err');nav('settings');return;}
+  document.getElementById('qaarea').classList.remove('on');
+  document.getElementById('processing').classList.add('on');
+  document.getElementById('proc-s').textContent='Extracting contact details…';
+  try{
+    const r=await geminiQuickAdd(text);
+    document.getElementById('processing').classList.remove('on');
+    showForm();
+    sf('f-name',r.name);sf('f-title',r.title);sf('f-company',r.company);
+    sf('f-email',r.email);sf('f-phone',r.phone);sf('f-website',r.website);
+    sf('f-address',r.address);sf('f-comment',r.enhancedComment);
+    if(r.followUpDate)sf('f-followup',r.followUpDate);
+    const valid=['Hot Lead','Follow Up','Not Interested'];
+    if(valid.includes(r.suggestedStatus)){
+      S.selStatus=r.suggestedStatus;
+      document.querySelectorAll('.sstatus').forEach(s=>s.classList.toggle('on',s.dataset.st===S.selStatus));
+    }
+    toast('Contact details extracted','ok');
+  }catch(e){
+    document.getElementById('processing').classList.remove('on');
+    document.getElementById('qaarea').classList.add('on');
+    toast('Could not analyze — try again or fill manually','inf');
+  }
+}
+
+async function geminiQuickAdd(text){
+  const today=new Date().toISOString().slice(0,10);
+  const prompt=`You are a CRM assistant. The user described a contact they just met at an expo in plain language.
+User input: "${text}"
+Today's date is ${today}.
+
+Extract all contact information and return ONLY a raw JSON object (no markdown, no code fences):
+{
+  "name": "full name",
+  "title": "job title or role",
+  "company": "company or organization name",
+  "email": "email if mentioned",
+  "phone": "phone if mentioned",
+  "website": "website if mentioned",
+  "address": "location if mentioned",
+  "enhancedComment": "professional summary of context, what they need, and action items. Keep under 100 words.",
+  "followUpDate": "if a follow-up timing is mentioned (tomorrow, next week, Monday, in 3 days, etc.) return YYYY-MM-DD, else empty string",
+  "suggestedStatus": "based on interest level expressed, exactly one of: Hot Lead | Follow Up | Not Interested"
+}
+Use empty string for any field not found. Return ONLY the JSON.`;
+  return geminiReq([{text:prompt}]);
+}
+
 async function geminiText(prompt){return geminiReq([{text:prompt}]);}
 
 async function geminiReq(parts){
@@ -1022,7 +1107,7 @@ function resetAdd(){
   document.getElementById('asec').classList.remove('on');
   document.getElementById('processing').classList.remove('on');
   document.getElementById('upload-area').classList.remove('on');
-  document.getElementById('li-banner').classList.remove('on');
+  document.getElementById('qaarea').classList.remove('on');
   document.querySelectorAll('.mcard').forEach(c=>c.classList.remove('sel'));
   ['f-name','f-title','f-company','f-email','f-phone','f-linkedin',
    'f-website','f-address','f-comment','f-followup','pre-comment'].forEach(id=>sf(id,''));
