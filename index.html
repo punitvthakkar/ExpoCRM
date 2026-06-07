@@ -955,20 +955,25 @@ async function handleQR(data){
   }
   if(isLI){
     document.getElementById('processing').classList.add('on');
-    document.getElementById('proc-s').textContent='Extracting name from LinkedIn URL…';
+    document.getElementById('proc-s').textContent='Fetching LinkedIn profile…';
     try{
-      const slug=data.match(/linkedin\.com\/in\/([^/?#]+)/)?.[1]||'';
-      const prompt=`LinkedIn URL: ${data}\nSlug: "${slug}"\nConvert slug to a proper human name (remove numeric suffixes, capitalize words, replace hyphens with spaces).\nReturn ONLY JSON: {"name":"Extracted Name","linkedin":"${data}"}`;
-      const r=await geminiText(prompt);
+      const r=await geminiLinkedIn(data);
       document.getElementById('processing').classList.remove('on');
       showForm();
-      if(r.name)sf('f-name',r.name);
+      sf('f-name',r.name);sf('f-title',r.title);sf('f-company',r.company);
+      sf('f-email',r.email);sf('f-phone',r.phone);sf('f-website',r.website);
+      sf('f-address',r.address);sf('f-comment',r.enhancedComment);
       sf('f-linkedin',data);
-      toast('LinkedIn profile processed','ok');
+      const valid=['Hot Lead','Follow Up','Not Interested'];
+      if(valid.includes(r.suggestedStatus)){
+        S.selStatus=r.suggestedStatus;
+        document.querySelectorAll('.sstatus').forEach(s=>s.classList.toggle('on',s.dataset.st===S.selStatus));
+      }
+      toast('LinkedIn profile extracted','ok');
     }catch(e){
       document.getElementById('processing').classList.remove('on');
       showForm();sf('f-linkedin',data);
-      toast('Could not extract name — fill manually','inf');
+      toast('Could not read profile — fill manually','inf');
     }
   }else{showForm();sf('f-linkedin',data);}
 }
@@ -1026,6 +1031,39 @@ Return ONLY a raw JSON object (no markdown, no code fences) with these exact key
 }
 Use empty string for any field not found on the card. Return ONLY the JSON.`;
   return geminiReq([{text:prompt},{inline_data:{mime_type:mime,data:b64}}]);
+}
+
+async function geminiLinkedIn(profileUrl){
+  const prompt=`You are a CRM assistant. Use the URL context tool to fetch and read this LinkedIn profile page: ${profileUrl}
+
+Extract all visible contact and professional information. Return ONLY a raw JSON object (no markdown, no code fences):
+{
+  "name": "full name",
+  "title": "current job title",
+  "company": "current company name",
+  "email": "email address if shown",
+  "phone": "phone number if shown",
+  "website": "personal or company website if shown",
+  "address": "location or city/country",
+  "enhancedComment": "2-3 sentence professional summary: their role, background, and why they are worth following up with",
+  "suggestedStatus": "exactly one of: Hot Lead | Follow Up | Not Interested"
+}
+Use empty string for any field not found. Return ONLY the JSON.`;
+  const apiUrl=`https://generativelanguage.googleapis.com/v1beta/models/${S.model}:generateContent?key=${S.apiKey}`;
+  const res=await fetch(apiUrl,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{parts:[{text:prompt}]}],
+      tools:[{urlContext:{}}],
+      generationConfig:{temperature:0.1,maxOutputTokens:800}
+    })
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
+  const data=await res.json();
+  const text=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+  const m=text.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('No JSON in Gemini response');
+  return JSON.parse(m[0]);
 }
 
 async function geminiText(prompt){return geminiReq([{text:prompt}]);}
