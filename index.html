@@ -842,7 +842,7 @@ function pickMethod(m){
   document.getElementById('qaarea').classList.remove('on');
   document.getElementById('asec').classList.remove('on');
   document.getElementById('processing').classList.remove('on');
-  if(m==='camera')startCam('card');
+  if(m==='camera')startCam();
   else if(m==='upload')document.getElementById('upload-area').classList.add('on');
   else if(m==='quick')document.getElementById('qaarea').classList.add('on');
 }
@@ -850,11 +850,10 @@ function pickMethod(m){
 // ════════════════════════════════════════════
 // CAMERA
 // ════════════════════════════════════════════
-async function startCam(mode){
+async function startCam(){
   const wrap=document.getElementById('cam-wrap');
   wrap.classList.add('on');
-  document.getElementById('cam-card').style.display=mode==='card'?'flex':'none';
-  document.getElementById('cam-qr').style.display=mode==='qr'?'flex':'none';
+  document.getElementById('cam-card').style.display='flex';
   try{
     S.stream=await navigator.mediaDevices.getUserMedia({
       video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
