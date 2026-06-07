@@ -144,15 +144,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
   backdrop-filter:blur(4px);transition:transform .1s}
 .shutter:active{transform:scale(.92)}
 .shutter-in{width:44px;height:44px;border-radius:50%;background:#fff}
-.qr-ui{position:absolute;inset:0;display:flex;align-items:center;
-  justify-content:center;flex-direction:column;gap:12px}
-.qr-box{width:200px;height:200px;border:2.5px solid rgba(255,255,255,.9);
-  border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);
-  position:relative;overflow:hidden}
-.qr-line{position:absolute;left:0;right:0;height:2px;background:var(--p);
-  animation:scan 2s ease-in-out infinite}
-@keyframes scan{0%,100%{top:4px}50%{top:calc(100% - 6px)}}
-.qr-hint{font-size:12px;color:rgba(255,255,255,.85)}
 
 /* ── UPLOAD ── */
 .upload-area{display:none;margin-bottom:12px}
@@ -165,14 +156,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
 .u-txt{font-size:14px;font-weight:600;color:var(--tx)}
 .u-sub{font-size:12px;color:var(--tx2);margin-top:4px}
 
-/* ── LINKEDIN BANNER ── */
-.li-banner{display:none;margin-bottom:12px;background:var(--pl);
-  border:1.5px solid rgba(3,147,116,.25);border-radius:var(--rs);
-  padding:12px 14px;gap:10px;align-items:flex-start}
-.li-banner.on{display:flex}
-.li-ico{flex-shrink:0;color:var(--p);margin-top:1px}
-.li-ttl{font-size:13px;font-weight:700;color:var(--pd)}
-.li-url{font-size:11px;color:var(--p);word-break:break-all;margin-top:2px}
 
 /* ── ANALYZE SECTION ── */
 .asec{display:none;margin-bottom:16px}.asec.on{display:block}
@@ -439,11 +422,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
               <div class="mcard-lbl">Upload Card</div>
               <div class="mcard-sub">From gallery</div>
             </div>
-            <div class="mcard" id="mc-qr" onclick="pickMethod('qr')">
-              <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="19" y1="14" x2="21" y2="14"/><line x1="21" y1="17" x2="17" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/><line x1="21" y1="19" x2="21" y2="21"/></svg></div>
-              <div class="mcard-lbl">LinkedIn QR</div>
-              <div class="mcard-sub">Scan profile</div>
-            </div>
+
             <div class="mcard" id="mc-manual" onclick="pickMethod('manual')">
               <div class="mcard-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
               <div class="mcard-lbl">Manual Entry</div>
@@ -460,10 +439,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
             <p class="cam-tip">Centre the business card in frame</p>
             <button class="shutter" onclick="captureFrame()"><div class="shutter-in"></div></button>
           </div>
-          <div class="qr-ui" id="cam-qr" style="display:none">
-            <div class="qr-box"><div class="qr-line"></div></div>
-            <span class="qr-hint">Scanning for LinkedIn QR…</span>
-          </div>
+
         </div>
 
         <!-- Upload -->
@@ -476,11 +452,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
           <input type="file" id="fpick" accept="image/*" style="display:none" onchange="handleUpload(event)">
         </div>
 
-        <!-- LinkedIn detected -->
-        <div class="li-banner" id="li-banner">
-          <span class="li-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
-          <div><div class="li-ttl">LinkedIn Profile Detected</div><div class="li-url" id="li-url"></div></div>
-        </div>
 
         <!-- Analyze section (after photo) -->
         <div class="asec" id="asec">
@@ -678,7 +649,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sy
 <div class="toasts" id="toasts"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 // SVG icon strings for dynamically generated content
 const IC = {
@@ -702,7 +672,7 @@ const S = {
   contacts:[],apiKey:'',teamName:'',model:'gemini-flash-lite-latest',
   view:'contacts',filter:'all',query:'',
   method:null,capturedImg:null,
-  stream:null,qrTimer:null,
+  stream:null,
   editId:null,selStatus:'Follow Up'
 };
 const K={c:'eCRM_c',k:'eCRM_k',t:'eCRM_t',m:'eCRM_m'};
@@ -849,7 +819,6 @@ function pickMethod(m){
   document.getElementById('processing').classList.remove('on');
   if(m==='camera')startCam('card');
   else if(m==='upload')document.getElementById('upload-area').classList.add('on');
-  else if(m==='qr')startCam('qr');
   else if(m==='manual')showForm();
 }
 
@@ -868,7 +837,6 @@ async function startCam(mode){
     const vid=document.getElementById('cam-vid');
     vid.srcObject=S.stream;
     await vid.play();
-    if(mode==='qr')startQR();
   }catch(e){
     wrap.classList.remove('on');
     toast('Camera access denied — check browser permissions','err');
@@ -877,7 +845,6 @@ async function startCam(mode){
 
 function killCam(){
   if(S.stream){S.stream.getTracks().forEach(t=>t.stop());S.stream=null;}
-  if(S.qrTimer){clearInterval(S.qrTimer);S.qrTimer=null;}
   document.getElementById('cam-wrap').classList.remove('on');
 }
 
@@ -926,52 +893,6 @@ function retake(){
   else{document.getElementById('upload-area').classList.add('on');document.getElementById('fpick').value='';}
 }
 
-// ════════════════════════════════════════════
-// QR SCAN
-// ════════════════════════════════════════════
-function startQR(){
-  const vid=document.getElementById('cam-vid');
-  const cvs=document.createElement('canvas');
-  const ctx=cvs.getContext('2d');
-  S.qrTimer=setInterval(()=>{
-    if(vid.readyState<vid.HAVE_ENOUGH_DATA)return;
-    cvs.width=vid.videoWidth;cvs.height=vid.videoHeight;
-    ctx.drawImage(vid,0,0);
-    const d=ctx.getImageData(0,0,cvs.width,cvs.height);
-    const code=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
-    if(code?.data){clearInterval(S.qrTimer);S.qrTimer=null;killCam();handleQR(code.data);}
-  },200);
-}
-
-async function handleQR(data){
-  const isLI=data.includes('linkedin.com/in/');
-  if(isLI){
-    document.getElementById('li-url').textContent=data;
-    document.getElementById('li-banner').classList.add('on');
-  }else{
-    toast('QR code detected — URL saved to LinkedIn field','inf');
-  }
-  if(!S.apiKey){
-    toast('No API key set — fill details manually','inf');
-    showForm();sf('f-linkedin',isLI?data:'');if(!isLI)sf('f-comment',data);return;
-  }
-  if(isLI){
-    document.getElementById('processing').classList.add('on');
-    document.getElementById('proc-s').textContent='Extracting name from LinkedIn URL…';
-    try{
-      const r=await geminiSlugFallback(data);
-      document.getElementById('processing').classList.remove('on');
-      showForm();
-      if(r.name)sf('f-name',r.name);
-      sf('f-linkedin',data);
-      toast('Name extracted — fill remaining details','ok');
-    }catch(e){
-      document.getElementById('processing').classList.remove('on');
-      showForm();sf('f-linkedin',data);
-      toast('Could not extract name — fill manually','inf');
-    }
-  }else{showForm();sf('f-linkedin',data);}
-}
 
 // ════════════════════════════════════════════
 // GEMINI
@@ -993,6 +914,7 @@ async function runGemini(){
     sf('f-email',r.email);sf('f-phone',r.phone);sf('f-website',r.website);
     sf('f-address',r.address);
     sf('f-comment',r.enhancedComment||comment);
+    if(r.followUpDate)sf('f-followup',r.followUpDate);
     const valid=['Hot Lead','Follow Up','Not Interested'];
     if(valid.includes(r.suggestedStatus)){
       S.selStatus=r.suggestedStatus;
@@ -1008,9 +930,11 @@ async function runGemini(){
 }
 
 async function geminiVision(b64,mime,comment){
+  const today=new Date().toISOString().slice(0,10);
   const prompt=`You are an expert business card parser and CRM assistant.
 Carefully analyze this business card image and extract ALL visible contact information.
 ${comment?`The user's note about this contact: "${comment}"`:''}
+Today's date is ${today}.
 
 Return ONLY a raw JSON object (no markdown, no code fences) with these exact keys:
 {
@@ -1022,18 +946,13 @@ Return ONLY a raw JSON object (no markdown, no code fences) with these exact key
   "website": "website URL",
   "address": "full address, or city/country if partial",
   "enhancedComment": "${comment?'Rewrite the user note professionally: key requirements, action items, follow-up context. Keep under 100 words.':''}",
+  "followUpDate": "${comment?`If the note implies a follow-up timing (e.g. "tomorrow", "next week", "in 3 days", "Monday"), return the exact date as YYYY-MM-DD. Otherwise return empty string.`:''}",
   "suggestedStatus": "based on context, exactly one of: Hot Lead | Follow Up | Not Interested"
 }
 Use empty string for any field not found on the card. Return ONLY the JSON.`;
   return geminiReq([{text:prompt},{inline_data:{mime_type:mime,data:b64}}]);
 }
 
-async function geminiSlugFallback(profileUrl){
-  const slug=profileUrl.match(/linkedin\.com\/in\/([^/?#]+)/)?.[1]||'';
-  const prompt=`LinkedIn slug: "${slug}". Convert to a proper human name: remove numeric suffixes, capitalize words, replace hyphens with spaces. Return ONLY JSON: {"name":"Full Name","linkedin":"${profileUrl}","suggestedStatus":"Follow Up"}`;
-  const r=await geminiReq([{text:prompt}]);
-  return {...r,title:'',company:'',email:'',phone:'',website:'',address:'',enhancedComment:''};
-}
 
 async function geminiText(prompt){return geminiReq([{text:prompt}]);}
 
